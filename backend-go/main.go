@@ -51,6 +51,7 @@ func main() {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/api/customers", customerHandler.CreateCustomer).Methods(http.MethodPost)
+	router.HandleFunc("/api/customers/{id}", customerHandler.UpdateCustomer).Methods(http.MethodPut)
 
 	log.Printf("backend server running on port: %v", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), router))
