@@ -1,6 +1,6 @@
 # Customer Family CRUD Project
 
-## This project consists Laravel frontend and Go backend with a PostgreSQL database
+## This project consists Laravel frontend and Go backend with a PostgreSQL database, part of technical test of Bookingtogo
 
 ## How to run this project?
 
