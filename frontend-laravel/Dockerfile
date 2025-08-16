@@ -2,22 +2,24 @@ FROM php:8.2-fpm-alpine
 
 RUN apk add --no-cache \
     nginx \
-    composer \
     git \
     nodejs \
-    npm
-
-RUN docker-php-ext-install pdo pdo_mysql opcache session fileinfo tokenizer dom
+    npm \
+    php82-tokenizer \
+    && docker-php-ext-install \
+    pdo_mysql \
+    opcache \
+    session \
+    fileinfo \
+    dom
 
 RUN adduser -D -g '' appuser
 
 WORKDIR /var/www/html
 
-COPY composer.json composer.lock ./
+COPY . .
 
 RUN composer install --no-dev --optimize-autoloader
-
-COPY . .
 
 RUN if [ ! -f .env ]; then cp .env.example .env; fi
 RUN php artisan key:generate

@@ -4,25 +4,8 @@
 
 ## How to run this project?
 
-### 1. Using Docker Compose
-We can get started with Docker Compose. This method sets up all three services, Laravel, Go, and PostgreSQL.
-
-### Prerequisites
-* Docker and Docker Compose installed
-
-### Setup 
-* Navigate to the root directory of project
-* Run the following command to build and start all containers
-```console
-docker-compose up --build
-```
-* First time run this, it will take a while to download and build all the necessary images. Subsequent runs will be much faster.
-* Once all services are running, we can access applications
-    1. Frontend (Laravel): http://localhost:8000
-    2. Backend (Go): http://localhost:8080
-
-### 2. Manual setup
-We can also run these project without Docker Compose
+### 1. Setup
+We can run by running each one these projects
 
 ### Prerequisites
 * PHP version 8.2 or higher
