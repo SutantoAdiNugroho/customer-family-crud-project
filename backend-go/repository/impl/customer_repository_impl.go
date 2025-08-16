@@ -3,8 +3,10 @@ package impl
 import (
 	"customer-family-crud-backend/domain/model"
 	"customer-family-crud-backend/repository"
+	"customer-family-crud-backend/repository/dto"
 	"database/sql"
 	"fmt"
+	"log"
 )
 
 type CustomerRepositoryImpl struct {
@@ -112,4 +114,88 @@ func (r *CustomerRepositoryImpl) UpdateCustomer(customer *model.Customer, family
 	}
 
 	return tx.Commit()
+}
+
+func (r *CustomerRepositoryImpl) DeleteCustomer(id int) error {
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// delete all family list
+	delFamilyListQuery := `DELETE FROM family_list WHERE cst_id = $1`
+	_, err = tx.Exec(delFamilyListQuery, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete family list: %w", err)
+	}
+
+	// delete customer
+	delCustomerQuery := `DELETE FROM customer WHERE cst_id = $1`
+	result, err := tx.Exec(delCustomerQuery, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete customer: %w", err)
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		return fmt.Errorf("customer with id %d not found", id)
+	}
+
+	return tx.Commit()
+}
+
+func (r *CustomerRepositoryImpl) GetAllCustomers(limit, offset int) ([]*dto.CustomerWithFamilyCount, int, error) {
+	var total int
+	err := r.DB.QueryRow(`SELECT count(*) FROM customer`).Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	results := []*dto.CustomerWithFamilyCount{}
+	query := `
+		SELECT 
+			customer.cst_id as cst_id, 
+			customer.cst_name as cst_name, 
+			customer.cst_dob as cst_dob, 
+			customer.cst_email as cst_email,
+			COUNT(fl_id) AS family_count
+		FROM customer
+		LEFT JOIN family_list ON customer.cst_id = family_list.cst_id
+		GROUP BY customer.cst_id
+		ORDER BY customer.cst_id ASC
+		limit $1 OFFSET $2
+	`
+	rows, err := r.DB.Query(query, limit, offset)
+	if err != nil {
+		log.Printf("failed to get all customers: %v", err)
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		customer := &model.Customer{}
+		var familyCount int
+		err := rows.Scan(
+			&customer.CstID,
+			&customer.CstName,
+			&customer.CstDob,
+			&customer.CstEmail,
+			&familyCount,
+		)
+		if err != nil {
+			log.Printf("failed to get all customers: %v", err)
+			return nil, 0, err
+		}
+
+		results = append(results, &dto.CustomerWithFamilyCount{
+			CstID:       customer.CstID,
+			CstName:     customer.CstName,
+			CstDob:      customer.CstDob,
+			CstEmail:    customer.CstEmail,
+			FamilyCount: familyCount,
+		})
+	}
+
+	return results, total, nil
 }
