@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -30,6 +31,11 @@ func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
+	}
+
+	allowedOrigin := os.Getenv("CORS_ALLOWED_ORIGIN")
+	if allowedOrigin == "" {
+		log.Fatal("env CORS_ALLOWED_ORIGIN variable is not set")
 	}
 
 	// db connection
@@ -64,6 +70,16 @@ func main() {
 	// nationality handlers
 	router.HandleFunc("/api/nationalities", nationalityHandler.GetAllNationalities).Methods(http.MethodGet)
 
+	// cors configuration
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{allowedOrigin},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders: []string{"Content-Type"},
+		Debug:          true,
+	})
+
+	handlerWithCORS := c.Handler(router)
+
 	log.Printf("backend server running on port: %v", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), router))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), handlerWithCORS))
 }

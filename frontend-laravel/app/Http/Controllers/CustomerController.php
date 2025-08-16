@@ -44,15 +44,52 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
+        // validation for customer data
+        $validatedCustomerData = $request->validate([
+            'cst_name' => 'required|string|max:255',
+            'cst_dob' => 'required|date',
+            'cst_phoneNum' => 'required|string|max:20',
+            'cst_email' => 'required|email|max:255',
+            'nationality_id' => 'required|integer',
+        ], [
+            'cst_name.required' => 'Customer name is required',
+            'cst_dob.required' => 'Date of birthday customer is required',
+            'cst_phoneNum.required' => 'Phone number is required',
+            'cst_email.required' => 'Email is required',
+            'cst_email.email' => 'Email format is not valid',
+            'nationality_id.required' => 'Customer nationality is required',
+        ]);
+
+        // validation for customer family list data
+        $validatedFamilyData = $request->validate([
+            'family_name.*' => 'required|string|max:255',
+            'family_relation.*' => 'required|string|max:255',
+            'family_dob.*' => 'required|date',
+        ], [
+            'family_name.*.required' => 'Family member names are required',
+            'family_relation.*.required' => 'Family member relation are required',
+            'family_dob.*.required' => 'Family member date of birthday are required',
+        ]);
+        
+        $customerData = array_merge($validatedCustomerData, [
+            'cst_dob' => Carbon::parse($validatedCustomerData['cst_dob'])->toIso8601String(),
+            'nationality_id' => (int) $validatedCustomerData['nationality_id'],
+        ]);
+        
+        $familyLists = [];
+        if (isset($validatedFamilyData['family_name'])) {
+            foreach ($validatedFamilyData['family_name'] as $key => $name) {
+                $familyLists[] = [
+                    'fl_name' => $name,
+                    'fl_relation' => $validatedFamilyData['family_relation'][$key],
+                    'fl_dob' => $validatedFamilyData['family_dob'][$key],
+                ];
+            }
+        }
+
         $response = Http::post($this->goApiUrl . '/customers', [
-            'customer' => [
-                'nationality_id' => (int) $request->input('nationality_id'),
-                'cst_name' => $request->input('cst_name'),
-                'cst_dob' => Carbon::parse($request->input('cst_dob'))->toIso8601String(),
-                'cst_phoneNum' => $request->input('cst_phoneNum'),
-                'cst_email' => $request->input('cst_email'),
-            ],
-            'family_list' => $this->formatFamilyLists($request),
+            'customer' => $customerData,
+            'family_list' => $familyLists,
         ]);
 
         if ($response->successful()) {
@@ -64,6 +101,55 @@ class CustomerController extends Controller
         $message = $errorData['message'] ?? 'Error occured when add customer.';
 
         // redirect with error
+        throw ValidationException::withMessages([
+            'api_error' => [$message],
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validatedCustomerData = $request->validate([
+            'cst_name' => 'required|string|max:255',
+            'cst_dob' => 'required|date',
+            'cst_phoneNum' => 'required|string|max:20',
+            'cst_email' => 'required|email|max:255',
+            'nationality_id' => 'required|integer',
+        ]);
+        
+        $validatedFamilyData = $request->validate([
+            'family_name.*' => 'required|string|max:255',
+            'family_relation.*' => 'required|string|max:255',
+            'family_dob.*' => 'required|date',
+        ]);
+
+        $customerData = array_merge($validatedCustomerData, [
+            'cst_dob' => Carbon::parse($validatedCustomerData['cst_dob'])->toIso8601String(),
+            'nationality_id' => (int) $validatedCustomerData['nationality_id'],
+        ]);
+
+        $familyLists = [];
+        if (isset($validatedFamilyData['family_name'])) {
+            foreach ($validatedFamilyData['family_name'] as $key => $name) {
+                $familyLists[] = [
+                    'fl_name' => $name,
+                    'fl_relation' => $validatedFamilyData['family_relation'][$key],
+                    'fl_dob' => $validatedFamilyData['family_dob'][$key],
+                ];
+            }
+        }
+
+        $response = Http::put($this->goApiUrl . '/customers/' . $id, [
+            'customer' => $customerData,
+            'family_list' => $familyLists,
+        ]);
+
+        if ($response->successful()) {
+            return redirect('/')->with('success', 'Customer successfully updated');
+        }
+
+        $errorData = $response->json();
+        $message = $errorData['message'] ?? 'Error occured when update customer';
+
         throw ValidationException::withMessages([
             'api_error' => [$message],
         ]);
