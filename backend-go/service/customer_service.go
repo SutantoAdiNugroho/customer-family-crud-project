@@ -8,6 +8,7 @@ import (
 type CustomerService interface {
 	Create(customer *model.Customer, familyLists []*model.FamilyList) *ServiceError
 	Update(customer *model.Customer, familyLists []*model.FamilyList) *ServiceError
+	GetCustomerDetailsByID(id int) (*model.Customer, []*model.FamilyList, *ServiceError)
 	GetAllCustomers(page, limit int) ([]*dto.CustomerWithFamilyCount, int, *ServiceError)
 	Delete(id int) *ServiceError
 }

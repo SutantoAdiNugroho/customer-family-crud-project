@@ -116,6 +116,42 @@ func (r *CustomerRepositoryImpl) UpdateCustomer(customer *model.Customer, family
 	return tx.Commit()
 }
 
+func (r *CustomerRepositoryImpl) GetCustomerDetailsyByID(id int) (*model.Customer, []*model.FamilyList, error) {
+	customer := &model.Customer{}
+
+	// get customer
+	custQuery := `SELECT cst_id, nationality_id, cst_name, cst_dob, cst_phoneNum, cst_email FROM customer WHERE cst_id = $1`
+	err := r.DB.QueryRow(custQuery, id).Scan(&customer.CstID, &customer.NationalityID, &customer.CstName, &customer.CstDob, &customer.CstPhoneNum, &customer.CstEmail)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil, fmt.Errorf("customer not found")
+		}
+		fmt.Printf("error when get customer detail: %v", err)
+		return nil, nil, err
+	}
+
+	// getc customer family list
+	familyList := []*model.FamilyList{}
+	familyListQuery := `SELECT fl_id, cst_id, fl_relation, fl_name, fl_dob FROM family_list WHERE cst_id = $1`
+	rows, err := r.DB.Query(familyListQuery, id)
+	if err != nil {
+		fmt.Printf("error when get customer family list: %v", err)
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		fl := &model.FamilyList{}
+		err := rows.Scan(&fl.FlID, &fl.CstID, &fl.FlRelation, &fl.FlName, &fl.FlDob)
+		if err != nil {
+			return nil, nil, err
+		}
+		familyList = append(familyList, fl)
+	}
+
+	return customer, familyList, nil
+}
+
 func (r *CustomerRepositoryImpl) DeleteCustomer(id int) error {
 	tx, err := r.DB.Begin()
 	if err != nil {

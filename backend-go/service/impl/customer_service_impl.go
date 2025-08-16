@@ -72,6 +72,18 @@ func (s *customerServiceImpl) Update(customer *model.Customer, familyLists []*mo
 	return nil
 }
 
+func (s *customerServiceImpl) GetCustomerDetailsByID(id int) (*model.Customer, []*model.FamilyList, *service.ServiceError) {
+	customer, familyLists, err := s.customerRepo.GetCustomerDetailsyByID(id)
+	if err != nil {
+		if err.Error() == "customer not found" {
+			return nil, nil, service.NewServiceError("Customer not found", http.StatusNotFound)
+		}
+		return nil, nil, service.NewServiceError("Failed to get customer details", http.StatusInternalServerError)
+	}
+
+	return customer, familyLists, nil
+}
+
 func (s *customerServiceImpl) Delete(id int) *service.ServiceError {
 	extCustomer, errCust := s.GetCustomerByID(id)
 	if errCust != nil {

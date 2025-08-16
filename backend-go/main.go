@@ -44,16 +44,25 @@ func main() {
 	migration.InsertInitialNationalities(db)
 
 	customerRepo := repository.NewCustomerRepositoryImpl(db)
+	nationalityRepo := repository.NewNationalityRepositoryImpl(db)
 
 	customerService := service.NewCustomerService(customerRepo)
+	nationalityService := service.NewNationalityService(nationalityRepo)
 
 	customerHandler := handler.NewCustomerHandler(customerService)
+	nationalityHandler := handler.NewNationalityHandler(nationalityService)
 
 	router := mux.NewRouter()
+
+	// customer handlers
 	router.HandleFunc("/api/customers", customerHandler.CreateCustomer).Methods(http.MethodPost)
 	router.HandleFunc("/api/customers/{id}", customerHandler.UpdateCustomer).Methods(http.MethodPut)
+	router.HandleFunc("/api/customers/{id}", customerHandler.GetCustomerByID).Methods(http.MethodGet)
 	router.HandleFunc("/api/customers/{id}", customerHandler.DeleteCustomer).Methods(http.MethodDelete)
 	router.HandleFunc("/api/customers", customerHandler.GetAllCustomers).Methods(http.MethodGet).Queries("page", "{page}", "limit", "{limit}")
+
+	// nationality handlers
+	router.HandleFunc("/api/nationalities", nationalityHandler.GetAllNationalities).Methods(http.MethodGet)
 
 	log.Printf("backend server running on port: %v", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), router))

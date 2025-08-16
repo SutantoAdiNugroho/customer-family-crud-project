@@ -8,6 +8,7 @@ import (
 type CustomerRepository interface {
 	CreateCustomer(customer *model.Customer, familyList []*model.FamilyList) error
 	GetCustomerByIdOrEmail(id *int, email *string) (*model.Customer, error)
+	GetCustomerDetailsyByID(id int) (*model.Customer, []*model.FamilyList, error)
 	UpdateCustomer(customer *model.Customer, familyLists []*model.FamilyList) error
 	DeleteCustomer(id int) error
 	GetAllCustomers(limit, offset int) ([]*dto.CustomerWithFamilyCount, int, error)

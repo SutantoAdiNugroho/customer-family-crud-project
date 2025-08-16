@@ -75,6 +75,29 @@ func (h *CustomerHandler) UpdateCustomer(w http.ResponseWriter, r *http.Request)
 	utils.SuccessResponse(w, http.StatusOK, "Customer updated successfully", nil)
 }
 
+func (h *CustomerHandler) GetCustomerByID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Invalid customer id", nil)
+		return
+	}
+
+	customer, familyLists, svcErr := h.customerService.GetCustomerDetailsByID(id)
+	if svcErr != nil {
+		utils.ErrorResponse(w, svcErr.StatusCode, svcErr.Message, nil)
+		return
+	}
+
+	responseData := map[string]interface{}{
+		"customer":    customer,
+		"family_list": familyLists,
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Customer details", responseData)
+}
+
 func (h *CustomerHandler) DeleteCustomer(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
