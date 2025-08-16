@@ -14,7 +14,7 @@ We can run by running each one these projects
 * Go version 1.23.4 or higher
 * PostgreSQL database server running
 
-### A. Backend GO
+### Backend GO
 * Navigate to Go backend directory
 * Install Go dependencies
 ```console
@@ -27,7 +27,7 @@ go run main.go
 ```
 The API will be available at http://localhost:8080
 
-### B. Frontend Laravel
+### Frontend Laravel
 * Navigate to Laravel frontend directory
 * Install Composer dependencies:
 ```console
